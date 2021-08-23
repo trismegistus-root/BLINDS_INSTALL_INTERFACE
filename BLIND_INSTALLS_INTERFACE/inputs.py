@@ -42,6 +42,9 @@ class INPUT:
     def AREA(self):
         string = str(input("Enter designer area: "))
         return string
+    def PAYS(self):
+        _float = float(input("Enter how much the job pays: "))
+        return _float
 
 
 
@@ -72,7 +75,7 @@ class INPUT:
 
     def SCOPE(self):
         string = str(input("NOTES (Leave empty if None): "))
-        if string == None:
+        if string is None:
             return "None"
         return string
 
