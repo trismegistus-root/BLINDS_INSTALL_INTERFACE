@@ -36,6 +36,10 @@ def driver(please: SQL_INTERFACE) -> SQL_INTERFACE:
                     please.show_all().jobs()
                 elif job_option == 3:
                     please.search_for().job().by_ready_to_schedule()
+                elif job_option == 4:
+                    please.search_for().job().by_installer()
+                elif job_option == 5:
+                    please.delete().job()
                 else:
                     continue
 
@@ -64,6 +68,8 @@ def driver(please: SQL_INTERFACE) -> SQL_INTERFACE:
                     please.search_for().installer().by_name()
                 elif installer_option == 3:
                     please.show_all().installers()
+                elif installer_option == 4:
+                    please.delete().installer()
                 else:
                     continue
         else:
