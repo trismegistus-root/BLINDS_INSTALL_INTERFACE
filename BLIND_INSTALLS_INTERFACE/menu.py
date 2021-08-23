@@ -13,14 +13,21 @@ class Menu:
         return option
     
     def designers(self):
-        option = int(input("\n[0] Add new designer\n[1] Update designer info\n[2] Search for designer\n[3] Show all designers\n[4] Exit\n: "))
+        option = int(input("\n[0] Add new designer\n[1] Update designer info\n[2] Search for designer\n[3] Show all designers\n[4] Main Menu\n: "))
         return option
     
     def installers(self):
-        option = int(input("\n[0] Add new installer\n[1] Update installer info\n[2] Search for installer\n[3] Show all installers\n[4] Exit\n: "))
+        option = int(input("\n[0] Add new installer\n[1] Update installer info\n[2] Search for installer\n[3] Show all installers\n[4] Main Menu\n: "))
         return option
 
     class JOB_MENUS:
         def update_blind_and_box_count(self):
-            option = int(input("\n[0] Update box count\n[1] Update blind count\n[2] Exit\n: "))
+            option = int(input("\n[0] Update box count\n[1] Update blind count\n[2] Go Back\n: "))
             return option
+    
+    class TERMINATE_MENU:
+        main = 4
+        customer = 4
+        jobs = 4
+        designers = 4
+        installers = 4
