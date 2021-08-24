@@ -17,7 +17,7 @@ class SQL_INTERFACE:
     class show_all:
         def customers(self):
             connection.ping()
-            sql = QUERY.CUSTOMER().WHOLE_TABLE().WITHOUT_JOBID()
+            sql = QUERY.CUSTOMER().SELECT().WHOLE_TABLE().WITHOUT_JOBID()
             cursor.execute(sql)
             rows = cursor.fetchall()
             table = get.PANDAS_TABULATED_DATAFRAME(rows, columns._customer_without_jobID)
@@ -27,7 +27,7 @@ class SQL_INTERFACE:
 
         def jobs(self):
             connection.ping()
-            sql = QUERY.JOB().WHOLE_TABLE().WITHOUT_JOBID()
+            sql = QUERY.JOB().SELECT().WHOLE_TABLE().WITHOUT_JOBID()
             cursor.execute(sql)
             rows = cursor.fetchall()
             table = get.PANDAS_TABULATED_DATAFRAME(rows, columns._job_without_jobID)
@@ -37,7 +37,7 @@ class SQL_INTERFACE:
         
         def designers(self):
             connection.ping()
-            sql = QUERY.DESIGNER().WHOLE_TABLE().ALL_COLUMNS()
+            sql = QUERY.DESIGNER().SELECT().WHOLE_TABLE().ALL_COLUMNS()
             cursor.execute(sql)
             rows = cursor.fetchall()
             table = get.PANDAS_TABULATED_DATAFRAME(rows, columns._designers)
@@ -47,7 +47,7 @@ class SQL_INTERFACE:
         
         def installers(self):
             connection.ping()
-            sql = QUERY.INSTALLER().WHOLE_TABLE().ALL_COLUMNS()
+            sql = QUERY.INSTALLER().SELECT().WHOLE_TABLE().ALL_COLUMNS()
             cursor.execute(sql)
             rows = cursor.fetchall()
             table = get.PANDAS_TABULATED_DATAFRAME(rows, columns._installers)

@@ -2,9 +2,6 @@ from string import Template
 
 class QUERY:
     class CUSTOMER:
-        class WHOLE_TABLE:
-            def WITHOUT_JOBID(self):
-                return "SELECT F_NAME, L_NAME, ADDRESS, EMAIL, PHONE, AVAILABILITY, DESIGNER FROM CUSTOMER;"
         class INSERT:
             def NEW_CUSTOMER(self, F_NAME, L_NAME, ADDRESS, EMAIL, PHONE, AVAILABILITY, DESIGNER, JOB_ID):
                 return Template('INSERT INTO CUSTOMER \
@@ -25,10 +22,10 @@ class QUERY:
                     F_NAME = F_NAME,
                     L_NAME = L_NAME
                 )
+            class WHOLE_TABLE:
+                def WITHOUT_JOBID(self):
+                    return "SELECT F_NAME, L_NAME, ADDRESS, EMAIL, PHONE, AVAILABILITY, DESIGNER FROM CUSTOMER;"
     class JOB:
-        class WHOLE_TABLE:
-            def WITHOUT_JOBID(self):
-                return "SELECT PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB;"
         class INSERT:
             def NEW_JOB(self, JOB_ID, PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE):
                 return Template('INSERT INTO JOB \
@@ -65,11 +62,12 @@ class QUERY:
                 )
             def BY_JOB_ID(self,_hash):
                 return Template('SELECT CUSTOMER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT FROM JOB WHERE JOB_ID = "$_hash";').substitute(_hash = _hash)
+            
+            class WHOLE_TABLE:
+                def WITHOUT_JOBID(self):
+                    return "SELECT PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB;"
 
     class DESIGNER:
-        class WHOLE_TABLE:
-            def ALL_COLUMNS(self):
-                return "SELECT * FROM DESIGNER;"
         class INSERT:
             def NEW_DESIGNER(self, F_NAME, L_NAME, EMAIL, PHONE, COMPANY, AREA):
                 return Template('INSERT INTO DESIGNER \
@@ -88,10 +86,10 @@ class QUERY:
                     F_NAME = F_NAME,
                     L_NAME = L_NAME
                 )
+            class WHOLE_TABLE:
+                def ALL_COLUMNS(self):
+                    return "SELECT * FROM DESIGNER;"
     class INSTALLER:
-        class WHOLE_TABLE:
-            def ALL_COLUMNS(self):
-                return "SELECT * FROM INSTALLER;"
         class INSERT:
             def NEW_INSTALLER(self, F_NAME, L_NAME, PHONE, EMAIL):
                 return Template('INSERT INTO INSTALLER\
@@ -108,6 +106,9 @@ class QUERY:
                     F_NAME = F_NAME,
                     L_NAME = L_NAME
                 )
+            class WHOLE_TABLE:
+                def ALL_COLUMNS(self):
+                    return "SELECT * FROM INSTALLER;"
     class INSTALLER_PAY:
         class INSERT:
             def NEW_INSTALLER(self, L_NAME, F_NAME):
