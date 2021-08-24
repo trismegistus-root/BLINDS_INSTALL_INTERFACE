@@ -33,6 +33,8 @@ class QUERY:
                         L_NAME = L_NAME
                     )
     class JOB:
+
+
         class INSERT:
             def NEW_JOB(self, JOB_ID, PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE):
                 return Template('INSERT INTO JOB \
@@ -55,6 +57,8 @@ class QUERY:
                 return Template('DELETE FROM JOB WHERE JOB_ID = "$_hash";').substitute(
                 _hash = _hash
             )
+
+
         class SELECT:
             def BY_CUSTOMER_NAME(self, CUSTOMER):
                 return Template('SELECT CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB WHERE CUSTOMER = "$CUSTOMER";').substitute(
@@ -81,6 +85,19 @@ class QUERY:
             class WHOLE_TABLE:
                 def WITHOUT_JOBID(self):
                     return "SELECT PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB;"
+
+
+        class UPDATE:
+            def BOX_AND_BLIND_COUNT_MANUALLY(self, BOXES_IN, BLINDS_ON_HAND, READY_TO_SCHEDULE, _hash):
+                return Template('UPDATE JOB SET BOXES_IN = "$BOXES_IN",\
+                                                  BLINDS_ON_HAND="$BLINDS_ON_HAND",\
+                                                  READY_TO_SCHEDULE="$READY_TO_SCHEDULE" \
+                                                  WHERE JOB_ID = "$_hash";').substitute(
+                                                      BOXES_IN = BOXES_IN,
+                                                      BLINDS_ON_HAND = BLINDS_ON_HAND,
+                                                      READY_TO_SCHEDULE = READY_TO_SCHEDULE,
+                                                      _hash = _hash
+                                                  )
 
 
     class DESIGNER:

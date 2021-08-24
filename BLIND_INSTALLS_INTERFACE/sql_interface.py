@@ -193,15 +193,7 @@ class SQL_INTERFACE:
                     else:
                         continue
                 READY_TO_SCHEDULE = get.READY_TO_SCHEDULE(BOXES_IN, TOTAL_BOXES)
-                query = Template('UPDATE JOB SET BOXES_IN = "$BOXES_IN",\
-                                                  BLINDS_ON_HAND="$BLINDS_ON_HAND",\
-                                                  READY_TO_SCHEDULE="$READY_TO_SCHEDULE" \
-                                                  WHERE JOB_ID = "$_hash";').substitute(
-                                                      BOXES_IN = BOXES_IN,
-                                                      BLINDS_ON_HAND = BLINDS_ON_HAND,
-                                                      READY_TO_SCHEDULE = READY_TO_SCHEDULE,
-                                                      _hash = _hash
-                                                  )
+                query = QUERY.JOB().UPDATE().BOX_AND_BLIND_COUNT_MANUALLY(BOXES_IN, BLINDS_ON_HAND, READY_TO_SCHEDULE, _hash)
                 connection.ping()
                 cursor.execute(query)
                 connection.commit()
