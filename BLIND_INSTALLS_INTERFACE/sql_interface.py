@@ -5,267 +5,156 @@ import pandas as pd
 from menu import Menu
 from data_columns import COLUMN
 from alert_colors import colors
+from queries import QUERY
+from forms import FORM
 
+
+QUERY = QUERY()
+columns = COLUMN()
+get = INPUT()
 
 class SQL_INTERFACE:
-
-
     class show_all:
-
-        columns = COLUMN()
-
         def customers(self):
-            get = INPUT()
             connection.ping()
-            CustomerTableSql = "SELECT F_NAME, L_NAME, ADDRESS, EMAIL, PHONE, AVAILABILITY, DESIGNER FROM CUSTOMER;"
-            cursor.execute(CustomerTableSql)
+            sql = QUERY.CUSTOMER().WHOLE_TABLE().WITHOUT_JOBID()
+            cursor.execute(sql)
             rows = cursor.fetchall()
-            table = get.PANDAS_TABULATED_DATAFRAME(rows, self.columns._customer_without_jobID)
+            table = get.PANDAS_TABULATED_DATAFRAME(rows, columns._customer_without_jobID)
             get.and_print().COLORIZED_TABLE(table)
             connection.commit()
             connection.close()
-        
 
         def jobs(self):
-            get = INPUT()
             connection.ping()
-            JobTableSql = "SELECT PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB;"
-            cursor.execute(JobTableSql)
+            sql = QUERY.JOB().WHOLE_TABLE().WITHOUT_JOBID()
+            cursor.execute(sql)
             rows = cursor.fetchall()
-            table = get.PANDAS_TABULATED_DATAFRAME(rows, self.columns._job_without_jobID)
+            table = get.PANDAS_TABULATED_DATAFRAME(rows, columns._job_without_jobID)
             get.and_print().COLORIZED_TABLE(table)
             connection.commit()
             connection.close()
-
         
         def designers(self):
-            get = INPUT()
             connection.ping()
-            DesignerTableSql = "SELECT * FROM DESIGNER;"
-            cursor.execute(DesignerTableSql)
+            sql = QUERY.DESIGNER().WHOLE_TABLE().ALL_COLUMNS()
+            cursor.execute(sql)
             rows = cursor.fetchall()
-            table = get.PANDAS_TABULATED_DATAFRAME(rows, self.columns._designers)
+            table = get.PANDAS_TABULATED_DATAFRAME(rows, columns._designers)
             get.and_print().COLORIZED_TABLE(table)
             connection.commit()
             connection.close()
-
         
         def installers(self):
-            get = INPUT()
             connection.ping()
-            InstallerTableSql = "SELECT * FROM INSTALLER;"
-            cursor.execute(InstallerTableSql)
+            sql = QUERY.INSTALLER().WHOLE_TABLE().ALL_COLUMNS()
+            cursor.execute(sql)
             rows = cursor.fetchall()
-            table = get.PANDAS_TABULATED_DATAFRAME(rows, self.columns._installers)
+            table = get.PANDAS_TABULATED_DATAFRAME(rows, columns._installers)
             get.and_print().COLORIZED_TABLE(table)
             connection.commit()
             connection.close()
-        
-
 
     class add_new:
-
         def job(self):
-            get = INPUT()
-            L_NAME, F_NAME = get.CUSTOMER_AS_FOREIGN_KEY()
-            CUSTOMER = L_NAME, F_NAME
-            DESIGNER = get.DESIGNER_AS_FOREIGN_KEY()
-            INSTALLER = get.INSTALLER_AS_FOREIGN_KEY()
-            PAYS = get.PAYS()
-            BOXES_IN = get.BOXES_IN()
-            TOTAL_BOXES = get.TOTAL_BOXES()
-            BLINDS_ON_HAND = get.BLINDS_ON_HAND()
-            BLIND_COUNT = get.BLIND_COUNT()
-            SCOPE = get.SCOPE()
-            READY_TO_SCHEDULE = get.READY_TO_SCHEDULE(BOXES_IN, TOTAL_BOXES)
-            JOB_ID = get.JOB_ID(L_NAME + F_NAME)
-            JobTableSql = Template('INSERT INTO JOB \
-                (JOB_ID, PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE) VALUES \
-                    ("$JOB_ID", "$PAYS", "$CUSTOMER", "$DESIGNER", "$INSTALLER", "$BOXES_IN", "$TOTAL_BOXES", "$BLINDS_ON_HAND", "$BLIND_COUNT", "$SCOPE", "$READY_TO_SCHEDULE");').substitute(
-                        JOB_ID = JOB_ID, 
-                        PAYS = PAYS,
-                        CUSTOMER = CUSTOMER, 
-                        DESIGNER = DESIGNER, 
-                        INSTALLER = INSTALLER, 
-                        BOXES_IN = BOXES_IN, 
-                        TOTAL_BOXES = TOTAL_BOXES,
-                        BLINDS_ON_HAND = BLINDS_ON_HAND, 
-                        BLIND_COUNT = BLIND_COUNT, 
-                        SCOPE = SCOPE, 
-                        READY_TO_SCHEDULE = READY_TO_SCHEDULE
-                        )
+            L_NAME, F_NAME, CUSTOMER, DESIGNER, INSTALLER, PAYS, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE, JOB_ID = FORM.JOB().NEW_JOB()
+            sql = QUERY.JOB().INSERT().NEW_JOB(JOB_ID, PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE)
             connection.ping()
-            cursor.execute(JobTableSql)
+            cursor.execute(sql)
             connection.commit()
             connection.close()
             return L_NAME, F_NAME, DESIGNER, JOB_ID
 
-        
         def customer(self):
-            get = INPUT()
             L_NAME, F_NAME, DESIGNER, JOB_ID = self.job()
-            ADDRESS = get.ADDRESS("customer")
-            EMAIL = get.EMAIL("customer")
-            PHONE = get.PHONE("customer")
-            AVAILABILITY = get.AVAILABILITY()
-            CustomerTableSql = Template('INSERT INTO CUSTOMER \
-                                (F_NAME, L_NAME, ADDRESS, EMAIL, PHONE, AVAILABILITY, DESIGNER, JOB_ID) VALUES \
-                                    ("$F_NAME", "$L_NAME", "$ADDRESS", "$EMAIL", "$PHONE", "$AVAILABILITY", "$DESIGNER", "$JOB_ID");').substitute(
-                                        F_NAME = F_NAME,
-                                        L_NAME = L_NAME, 
-                                        ADDRESS = ADDRESS, 
-                                        EMAIL = EMAIL, 
-                                        PHONE = PHONE, 
-                                        AVAILABILITY = AVAILABILITY, 
-                                        DESIGNER = DESIGNER, 
-                                        JOB_ID = JOB_ID
-                                        )
+            ADDRESS, EMAIL, PHONE, AVAILABILITY = FORM.CUSTOMER().NEW_CUSTOMER_AFTER_NEW_JOB()
+            sql = QUERY.CUSTOMER().INSERT().NEW_CUSTOMER(F_NAME, L_NAME, ADDRESS, EMAIL, PHONE, AVAILABILITY, DESIGNER, JOB_ID)
             connection.ping()
-            cursor.execute(CustomerTableSql)
+            cursor.execute(sql)
             connection.commit()
             connection.close()
-
         
         def designer(self):
-            get = INPUT()
-            L_NAME, F_NAME = get.DESIGNER_AS_FOREIGN_KEY()
-            EMAIL = get.EMAIL("designer")
-            PHONE = get.PHONE("designer")
-            COMPANY = get.COMPANY()
-            AREA = get.AREA()
-            DesignerTableSql = Template('INSERT INTO DESIGNER \
-                                (F_NAME, L_NAME, EMAIL, PHONE, COMPANY, AREA) VALUES \
-                                    ("$F_NAME", "$L_NAME", "$EMAIL", "$PHONE", "$COMPANY", "$AREA");').substitute(
-                                        F_NAME = F_NAME,
-                                        L_NAME = L_NAME,
-                                        EMAIL = EMAIL,
-                                        PHONE = PHONE,
-                                        COMPANY = COMPANY,
-                                        AREA = AREA
-                                    )
+            L_NAME, F_NAME, EMAIL, PHONE, COMPANY, AREA = FORM.DESIGNER().NEW_DESIGNER()
+            sql = QUERY.DESIGNER().INSERT().NEW_DESIGNER(F_NAME, L_NAME, EMAIL, PHONE, COMPANY, AREA)
             connection.ping()
-            cursor.execute(DesignerTableSql)
+            cursor.execute(sql)
             connection.commit()
             connection.close()
 
-        
         def installer(self):
-            """ STILL UNDER TEST FOR InstallerPayTableQuery
-            """
-            get = INPUT()
-            L_NAME, F_NAME = get.INSTALLER_AS_FOREIGN_KEY()
-            PHONE = get.PHONE("installer")
-            EMAIL = get.EMAIL("installer")
-            InstallerTableSql = Template('INSERT INTO INSTALLER\
-                                    (F_NAME, L_NAME, PHONE, EMAIL) VALUES \
-                                    ("$F_NAME", "$L_NAME", "$PHONE", "$EMAIL");').substitute(
-                                        F_NAME = F_NAME,
-                                        L_NAME = L_NAME,
-                                        PHONE = PHONE,
-                                        EMAIL = EMAIL
-                                    )
-            InstallerPayTableQuery = Template('INSERT INTO INSTALLER_PAY (INSTALLER, PAY) VALUES ("$INSTALLER", "$PAY");').substitute(
-                INSTALLER = (L_NAME, F_NAME),
-                PAY = 0.0
-            )
+            L_NAME, F_NAME, PHONE, EMAIL = FORM.INSTALLER().NEW_INSTALLER()
+            sql = QUERY.INSTALLER().INSERT().NEW_INSTALLER(F_NAME, L_NAME, PHONE, EMAIL)
+            initialize_installer_pay = QUERY.INSTALLER_PAY().INSERT().NEW_INSTALLER(L_NAME, F_NAME)
             connection.ping()
-            cursor.execute(InstallerTableSql)
-            cursor.execute(InstallerPayTableQuery)
+            cursor.execute(sql)
+            cursor.execute(initialize_installer_pay)
             connection.commit()
             connection.close()
-
     
     class search_for:
-
         class customer:
-            columns = COLUMN()
             def by_name(self):
-                get = INPUT()
                 L_NAME, F_NAME = get.CUSTOMER_AS_FOREIGN_KEY()
-                CustomerSearchQuery = Template('SELECT F_NAME, L_NAME, ADDRESS, EMAIL, PHONE, AVAILABILITY FROM CUSTOMER WHERE F_NAME="$F_NAME" AND L_NAME="$L_NAME";').substitute(
-                    F_NAME = F_NAME,
-                    L_NAME = L_NAME
-                )
+                CustomerSearchQuery = QUERY.CUSTOMER().SELECT().BY_NAME(F_NAME, L_NAME)
                 connection.ping()
                 cursor.execute(CustomerSearchQuery)
                 result = cursor.fetchone()
-                table = get.PANDAS_TABULATED_DATAFRAME(result, self.columns._customers)
+                table = get.PANDAS_TABULATED_DATAFRAME(result, columns._customers)
                 get.and_print().COLORIZED_TABLE(table)
                 return result
 
-
         class job:
-            columns = COLUMN()
-
             def by_customer_name(self):
-                get = INPUT()
                 CUSTOMER = get.CUSTOMER_AS_FOREIGN_KEY()
-                JobSearchQuery = Template('SELECT CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB WHERE CUSTOMER = "$CUSTOMER";').substitute(
-                    CUSTOMER = CUSTOMER
-                )
+                JobSearchQuery = QUERY.JOB().SELECT().BY_CUSTOMER_NAME(CUSTOMER)
                 connection.ping()
                 cursor.execute(JobSearchQuery)
                 result = cursor.fetchone()
-                table = get.PANDAS_TABULATED_DATAFRAME(result, self.columns._job_without_jobID)
+                table = get.PANDAS_TABULATED_DATAFRAME(result, columns._job_without_jobID)
                 get.and_print().COLORIZED_TABLE(table)
                 return result
             
             def by_ready_to_schedule(self):
-                get = INPUT()
-                JobSearchQuery = "SELECT PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB WHERE READY_TO_SCHEDULE = 1;"
+                JobSearchQuery = QUERY.JOB().SELECT().BY_READY_TO_SCHEDULE()
                 connection.ping()
                 cursor.execute(JobSearchQuery)
                 result = cursor.fetchall()
-                table = get.PANDAS_TABULATED_DATAFRAME(result, self.columns._job_without_jobID)
+                table = get.PANDAS_TABULATED_DATAFRAME(result, columns._job_without_jobID)
                 get.and_print().COLORIZED_TABLE(table)
             
             def by_installer(self):
-                get = INPUT()
                 connection.ping()
-                installer = get.INSTALLER_AS_FOREIGN_KEY()
-                JobTableSql = Template('SELECT PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB WHERE INSTALLER = "$installer";').substitute(
-                    installer = installer
-                )
+                INSTALLER = get.INSTALLER_AS_FOREIGN_KEY()
+                JobTableSql = QUERY.JOB().SELECT().BY_INSTALLER(INSTALLER)
                 cursor.execute(JobTableSql)
                 rows = cursor.fetchall()
-                table = get.PANDAS_TABULATED_DATAFRAME(rows, self.columns._job_without_jobID)
+                table = get.PANDAS_TABULATED_DATAFRAME(rows, columns._job_without_jobID)
                 get.and_print().COLORIZED_TABLE(table)
                 connection.commit()
                 connection.close()
-        
 
         class designer:
-            columns = COLUMN()
             def by_name(self):
-                get = INPUT()
                 L_NAME, F_NAME = get.DESIGNER_AS_FOREIGN_KEY()
-                DesignerSearchQuery = Template('SELECT F_NAME, L_NAME, EMAIL, PHONE, COMPANY, AREA FROM DESIGNER WHERE F_NAME = "$F_NAME" and L_NAME = "$L_NAME";').substitute(
-                    F_NAME = F_NAME,
-                    L_NAME = L_NAME
-                )
+                DesignerSearchQuery = QUERY.DESIGNER().SELECT().BY_NAME(F_NAME, L_NAME)
                 connection.ping()
                 cursor.execute(DesignerSearchQuery)
                 result = cursor.fetchone()
-                table = get.PANDAS_TABULATED_DATAFRAME(result, self.columns._designers)
+                table = get.PANDAS_TABULATED_DATAFRAME(result, columns._designers)
                 get.and_print().COLORIZED_TABLE(table)
                 return result
         
         class installer:
-            columns = COLUMN()
             def by_name(self):
-                get = INPUT()
                 L_NAME, F_NAME = get.INSTALLER_AS_FOREIGN_KEY()
-                InstallerSearchQuery = Template('SELECT * FROM INSTALLER WHERE F_NAME="$F_NAME" AND L_NAME="$L_NAME";').substitute(
-                    F_NAME = F_NAME,
-                    L_NAME = L_NAME
-                )
+                InstallerSearchQuery = QUERY.INSTALLER().SELECT().BY_NAME(F_NAME, L_NAME)
                 connection.ping()
                 cursor.execute(InstallerSearchQuery)
                 result = cursor.fetchone()
-                table = get.PANDAS_TABULATED_DATAFRAME(result, self.columns._installers)
+                table = get.PANDAS_TABULATED_DATAFRAME(result, columns._installers)
                 get.and_print().COLORIZED_TABLE(table)
                 return result
-    
 
     class update:
         class job:
@@ -274,11 +163,11 @@ class SQL_INTERFACE:
                              Display all gathered columns
                              Update count with INPUT() logic
                              Determine if Ready to schedule
+                    UNIQUE: Queries are too unique to separate logic for future use
                 """
-                get = INPUT()
                 L_NAME, F_NAME = get.CUSTOMER_AS_FOREIGN_KEY()
                 _hash = get.JOB_ID(L_NAME + F_NAME)
-                query = Template('SELECT CUSTOMER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT FROM JOB WHERE JOB_ID = "$_hash";').substitute(_hash = _hash)
+                query = QUERY.JOB().SELECT().BY_JOB_ID(_hash)
                 connection.ping()
                 cursor.execute(query)
                 result = cursor.fetchone()
@@ -317,7 +206,7 @@ class SQL_INTERFACE:
                 cursor.execute(query)
                 connection.commit()
                 connection.close()
-                query = Template('SELECT CUSTOMER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT FROM JOB WHERE JOB_ID = "$_hash";').substitute(_hash = _hash)
+                query = QUERY.JOB().SELECT().BY_JOB_ID(_hash)
                 connection.ping()
                 cursor.execute(query)
                 result = cursor.fetchone()
@@ -341,11 +230,8 @@ class SQL_INTERFACE:
                 table = get.TABULATE_UNIQUE_QUERY(df, updated_df_dict.keys())
                 get.and_print().COLORIZED_TABLE(table)
 
-
     class delete:
-
         def job(self):
-            get = INPUT()
             L_NAME, F_NAME = get.CUSTOMER_AS_FOREIGN_KEY()
             _hash = get.JOB_ID(L_NAME + F_NAME)
             # Matt, Kaleb, Judd
