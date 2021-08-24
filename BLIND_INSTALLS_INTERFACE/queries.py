@@ -25,6 +25,13 @@ class QUERY:
             class WHOLE_TABLE:
                 def WITHOUT_JOBID(self):
                     return "SELECT F_NAME, L_NAME, ADDRESS, EMAIL, PHONE, AVAILABILITY, DESIGNER FROM CUSTOMER;"
+
+        class UPDATE:
+            def JOB_ID_TO_COMPLETE(self, F_NAME, L_NAME):
+                return Template('UPDATE CUSTOMER SET JOB_ID = "COMPLETE" WHERE F_NAME = "$F_NAME" AND L_NAME = "$L_NAME";').substitute(
+                        F_NAME = F_NAME,
+                        L_NAME = L_NAME
+                    )
     class JOB:
         class INSERT:
             def NEW_JOB(self, JOB_ID, PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE):
@@ -63,9 +70,18 @@ class QUERY:
             def BY_JOB_ID(self,_hash):
                 return Template('SELECT CUSTOMER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT FROM JOB WHERE JOB_ID = "$_hash";').substitute(_hash = _hash)
             
+
+            class UNIQUE_COLUMNS:
+                class PAY_AND_INSTALLER:
+                    def BY_JOB_ID(self, _hash):
+                        return Template('SELECT PAYS, INSTALLER FROM JOB WHERE JOB_ID = "$_hash";').substitute(
+                                _hash = _hash
+                            )
+                            
             class WHOLE_TABLE:
                 def WITHOUT_JOBID(self):
                     return "SELECT PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB;"
+
 
     class DESIGNER:
         class INSERT:
@@ -109,6 +125,13 @@ class QUERY:
             class WHOLE_TABLE:
                 def ALL_COLUMNS(self):
                     return "SELECT * FROM INSTALLER;"
+
+        class DELETE:
+            def BY_NAME(self, F_NAME, L_NAME):
+                return Template('DELETE FROM INSTALLER WHERE F_NAME = "$F_NAME" AND L_NAME = "$L_NAME";').substitute(
+                        F_NAME = F_NAME,
+                        L_NAME = L_NAME
+                    )
     class INSTALLER_PAY:
         class INSERT:
             def NEW_INSTALLER(self, L_NAME, F_NAME):
@@ -116,3 +139,14 @@ class QUERY:
                             INSTALLER = (L_NAME, F_NAME),
                             PAY = 0.0
                         )
+        class SELECT:
+            def PAY(self, INSTALLER):
+                return Template('SELECT PAY FROM INSTALLER_PAY WHERE INSTALLER = "$INSTALLER";').substitute(
+                    INSTALLER = INSTALLER
+                )
+        class UPDATE:
+            def PAY(self, PAY, INSTALLER):
+                return Template('UPDATE INSTALLER_PAY SET PAY = "$PAY" WHERE INSTALLER = "$INSTALLER";').substitute(
+                        PAY = PAY,
+                        INSTALLER = INSTALLER
+                    )

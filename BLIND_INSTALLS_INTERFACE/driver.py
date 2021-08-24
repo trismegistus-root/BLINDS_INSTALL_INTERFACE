@@ -39,7 +39,7 @@ def driver(please: SQL_INTERFACE) -> SQL_INTERFACE:
                 elif job_option == 4:
                     please.search_for().job().by_installer()
                 elif job_option == 5:
-                    please.delete().job()
+                    please.delete().job_and_update_installer_pay()
                 else:
                     continue
 

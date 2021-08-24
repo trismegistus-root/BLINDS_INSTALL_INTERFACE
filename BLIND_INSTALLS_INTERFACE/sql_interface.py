@@ -231,39 +231,29 @@ class SQL_INTERFACE:
                 get.and_print().COLORIZED_TABLE(table)
 
     class delete:
-        def job(self):
-            _hash = FORM.JOB().ID()
+        def job_and_update_installer_pay(self):
+            _hash, L_NAME, F_NAME = FORM.JOB().ID_AND_NAMES()
             # Matt, Kaleb, Judd
             """ 1. Grab PAYS, pass to Installer under pay_table
                 2. Update customer JOB_ID to NIL
                 3. Remove JOB
             """
-            JobPayQuery = Template('SELECT PAYS, INSTALLER FROM JOB WHERE JOB_ID = "$_hash";').substitute(
-                _hash = _hash
-            )
+            JobPayQuery = QUERY.JOB().SELECT().UNIQUE_COLUMNS().PAY_AND_INSTALLER().BY_JOB_ID(_hash)
             # Treble damages - 
-            UpdateCustomerJobIDQuery = Template('UPDATE CUSTOMER SET JOB_ID = "COMPLETE" WHERE F_NAME = "$F_NAME" AND L_NAME = "$L_NAME";').substitute(
-                F_NAME = F_NAME,
-                L_NAME = L_NAME
-            )
+            UpdateCustomerJobIDQuery = QUERY.CUSTOMER().UPDATE().JOB_ID_TO_COMPLETE(F_NAME, L_NAME)
             DeleteJobQuery = QUERY.JOB().DELETE().BY_JOB_ID(_hash)
             connection.ping()
             cursor.execute(JobPayQuery)
-            result = cursor.fetchone()
+            result = cursor.fetchone() # result[0] = pay, result[1] = installer
+            INSTALLER = result[1]
+            PAY = result[0]
             connection.commit()
-
-            getInstallerCurrentPay = Template('SELECT PAY FROM INSTALLER_PAY WHERE INSTALLER = "$INSTALLER";').substitute(
-                INSTALLER = result[1]
-            )
+            getInstallerCurrentPay = QUERY.INSTALLER_PAY().SELECT().PAY(INSTALLER)
             cursor.execute(getInstallerCurrentPay)
             installer_current_pay = cursor.fetchone()
             connection.commit()
-            installer_current_pay = installer_current_pay[0] + float(result[0])
-            UpdateInstallerPayQuery = Template('UPDATE INSTALLER_PAY SET PAY = "$PAY" WHERE INSTALLER = "$INSTALLER";').substitute(
-                PAY = installer_current_pay,
-                INSTALLER = result[1]
-            )
-
+            installer_current_pay = installer_current_pay[0] + float(PAY)
+            UpdateInstallerPayQuery = QUERY.INSTALLER_PAY().UPDATE().PAY(installer_current_pay, INSTALLER)
             cursor.execute(UpdateInstallerPayQuery)
             cursor.execute(UpdateCustomerJobIDQuery)
             cursor.execute(DeleteJobQuery)
@@ -272,12 +262,10 @@ class SQL_INTERFACE:
 
         #TODO: Deletions for all tables
         def installer_from_installers_and_keep_pay(self):
-            get = INPUT()
+            """ As the name suggests, this function safe deletes an installer from the INSTALLER table but NOT from INSTALLER_PAY table
+            """
             L_NAME, F_NAME = get.INSTALLER_AS_FOREIGN_KEY()
-            deleteInstallerQuery = Template('DELETE FROM INSTALLER WHERE F_NAME = "$F_NAME" AND L_NAME = "$L_NAME";').substitute(
-                F_NAME = F_NAME,
-                L_NAME = L_NAME
-            )
+            deleteInstallerQuery = QUERY.INSTALLER().DELETE().BY_NAME(F_NAME, L_NAME)
             connection.ping()
             cursor.execute(deleteInstallerQuery)
             connection.commit()
