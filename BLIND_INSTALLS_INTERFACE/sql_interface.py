@@ -232,8 +232,7 @@ class SQL_INTERFACE:
 
     class delete:
         def job(self):
-            L_NAME, F_NAME = get.CUSTOMER_AS_FOREIGN_KEY()
-            _hash = get.JOB_ID(L_NAME + F_NAME)
+            _hash = FORM.JOB().ID()
             # Matt, Kaleb, Judd
             """ 1. Grab PAYS, pass to Installer under pay_table
                 2. Update customer JOB_ID to NIL
@@ -247,9 +246,7 @@ class SQL_INTERFACE:
                 F_NAME = F_NAME,
                 L_NAME = L_NAME
             )
-            DeleteJobQuery = Template('DELETE FROM JOB WHERE JOB_ID = "$_hash";').substitute(
-                _hash = _hash
-            )
+            DeleteJobQuery = QUERY.JOB().DELETE().BY_JOB_ID(_hash)
             connection.ping()
             cursor.execute(JobPayQuery)
             result = cursor.fetchone()

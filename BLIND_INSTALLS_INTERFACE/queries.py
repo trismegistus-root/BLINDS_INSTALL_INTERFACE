@@ -46,6 +46,11 @@ class QUERY:
                         SCOPE = SCOPE, 
                         READY_TO_SCHEDULE = READY_TO_SCHEDULE
                         )
+        class DELETE:
+            def BY_JOB_ID(self, _hash):
+                return Template('DELETE FROM JOB WHERE JOB_ID = "$_hash";').substitute(
+                _hash = _hash
+            )
         class SELECT:
             def BY_CUSTOMER_NAME(self, CUSTOMER):
                 return Template('SELECT CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB WHERE CUSTOMER = "$CUSTOMER";').substitute(
