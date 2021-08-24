@@ -4,6 +4,8 @@ from string import Template
 import pandas as pd
 from menu import Menu
 from data_columns import COLUMN
+from alert_colors import colors
+
 
 class SQL_INTERFACE:
 
@@ -13,59 +15,55 @@ class SQL_INTERFACE:
         columns = COLUMN()
 
         def customers(self):
+            get = INPUT()
             connection.ping()
-            CustomerTableSql = "SELECT * FROM CUSTOMER;"
+            CustomerTableSql = "SELECT F_NAME, L_NAME, ADDRESS, EMAIL, PHONE, AVAILABILITY, DESIGNER FROM CUSTOMER;"
             cursor.execute(CustomerTableSql)
             rows = cursor.fetchall()
-            df = pd.DataFrame(
-                rows, columns = self.columns.customers
-            )
-            print("\n", df, "\n")
+            table = get.PANDAS_TABULATED_DATAFRAME(rows, self.columns._customer_without_jobID)
+            get.and_print().COLORIZED_TABLE(table)
             connection.commit()
             connection.close()
         
 
         def jobs(self):
+            get = INPUT()
             connection.ping()
-            JobsTableSql = "SELECT * FROM JOBS;"
-            cursor.execute(JobsTableSql)
+            JobTableSql = "SELECT PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB;"
+            cursor.execute(JobTableSql)
             rows = cursor.fetchall()
-            df = pd.DataFrame(
-                rows, columns = self.columns.jobs
-            )
-            print("\n", df, "\n")
+            table = get.PANDAS_TABULATED_DATAFRAME(rows, self.columns._job_without_jobID)
+            get.and_print().COLORIZED_TABLE(table)
             connection.commit()
             connection.close()
 
         
         def designers(self):
+            get = INPUT()
             connection.ping()
             DesignerTableSql = "SELECT * FROM DESIGNER;"
             cursor.execute(DesignerTableSql)
             rows = cursor.fetchall()
-            df = pd.DataFrame(
-                rows, columns = self.columns.designers
-            )
-            print("\n", df, "\n")
+            table = get.PANDAS_TABULATED_DATAFRAME(rows, self.columns._designers)
+            get.and_print().COLORIZED_TABLE(table)
             connection.commit()
             connection.close()
 
         
         def installers(self):
+            get = INPUT()
             connection.ping()
             InstallerTableSql = "SELECT * FROM INSTALLER;"
             cursor.execute(InstallerTableSql)
             rows = cursor.fetchall()
-            df = pd.DataFrame(
-                rows, columns = self.columns.installers
-            )
-            print("\n", df, "\n")
+            table = get.PANDAS_TABULATED_DATAFRAME(rows, self.columns._installers)
+            get.and_print().COLORIZED_TABLE(table)
             connection.commit()
             connection.close()
+        
 
 
     class add_new:
-
 
         def job(self):
             get = INPUT()
@@ -73,6 +71,7 @@ class SQL_INTERFACE:
             CUSTOMER = L_NAME, F_NAME
             DESIGNER = get.DESIGNER_AS_FOREIGN_KEY()
             INSTALLER = get.INSTALLER_AS_FOREIGN_KEY()
+            PAYS = get.PAYS()
             BOXES_IN = get.BOXES_IN()
             TOTAL_BOXES = get.TOTAL_BOXES()
             BLINDS_ON_HAND = get.BLINDS_ON_HAND()
@@ -80,10 +79,11 @@ class SQL_INTERFACE:
             SCOPE = get.SCOPE()
             READY_TO_SCHEDULE = get.READY_TO_SCHEDULE(BOXES_IN, TOTAL_BOXES)
             JOB_ID = get.JOB_ID(L_NAME + F_NAME)
-            JobsTableSql = Template('INSERT INTO JOBS \
-                (JOB_ID, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE) VALUES \
-                    ("$JOB_ID", "$CUSTOMER", "$DESIGNER", "$INSTALLER", "$BOXES_IN", "$TOTAL_BOXES", "$BLINDS_ON_HAND", "$BLIND_COUNT", "$SCOPE", "$READY_TO_SCHEDULE");').substitute(
+            JobTableSql = Template('INSERT INTO JOB \
+                (JOB_ID, PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE) VALUES \
+                    ("$JOB_ID", "$PAYS", "$CUSTOMER", "$DESIGNER", "$INSTALLER", "$BOXES_IN", "$TOTAL_BOXES", "$BLINDS_ON_HAND", "$BLIND_COUNT", "$SCOPE", "$READY_TO_SCHEDULE");').substitute(
                         JOB_ID = JOB_ID, 
+                        PAYS = PAYS,
                         CUSTOMER = CUSTOMER, 
                         DESIGNER = DESIGNER, 
                         INSTALLER = INSTALLER, 
@@ -95,7 +95,7 @@ class SQL_INTERFACE:
                         READY_TO_SCHEDULE = READY_TO_SCHEDULE
                         )
             connection.ping()
-            cursor.execute(JobsTableSql)
+            cursor.execute(JobTableSql)
             connection.commit()
             connection.close()
             return L_NAME, F_NAME, DESIGNER, JOB_ID
@@ -150,6 +150,8 @@ class SQL_INTERFACE:
 
         
         def installer(self):
+            """ STILL UNDER TEST FOR InstallerPayTableQuery
+            """
             get = INPUT()
             L_NAME, F_NAME = get.INSTALLER_AS_FOREIGN_KEY()
             PHONE = get.PHONE("installer")
@@ -161,9 +163,14 @@ class SQL_INTERFACE:
                                         L_NAME = L_NAME,
                                         PHONE = PHONE,
                                         EMAIL = EMAIL
-                                    )             
+                                    )
+            InstallerPayTableQuery = Template('INSERT INTO INSTALLER_PAY (INSTALLER, PAY) VALUES ("$INSTALLER", "$PAY");').substitute(
+                INSTALLER = (L_NAME, F_NAME),
+                PAY = 0.0
+            )
             connection.ping()
             cursor.execute(InstallerTableSql)
+            cursor.execute(InstallerPayTableQuery)
             connection.commit()
             connection.close()
 
@@ -171,6 +178,7 @@ class SQL_INTERFACE:
     class search_for:
 
         class customer:
+            columns = COLUMN()
             def by_name(self):
                 get = INPUT()
                 L_NAME, F_NAME = get.CUSTOMER_AS_FOREIGN_KEY()
@@ -181,33 +189,53 @@ class SQL_INTERFACE:
                 connection.ping()
                 cursor.execute(CustomerSearchQuery)
                 result = cursor.fetchone()
-                print(result)
+                table = get.PANDAS_TABULATED_DATAFRAME(result, self.columns._customers)
+                get.and_print().COLORIZED_TABLE(table)
                 return result
 
 
         class job:
+            columns = COLUMN()
+
             def by_customer_name(self):
                 get = INPUT()
                 CUSTOMER = get.CUSTOMER_AS_FOREIGN_KEY()
-                JobSearchQuery = Template('SELECT JOB_ID, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOBS WHERE CUSTOMER = "$CUSTOMER";').substitute(
+                JobSearchQuery = Template('SELECT CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB WHERE CUSTOMER = "$CUSTOMER";').substitute(
                     CUSTOMER = CUSTOMER
                 )
                 connection.ping()
                 cursor.execute(JobSearchQuery)
                 result = cursor.fetchone()
-                print(result)
+                table = get.PANDAS_TABULATED_DATAFRAME(result, self.columns._job_without_jobID)
+                get.and_print().COLORIZED_TABLE(table)
                 return result
             
             def by_ready_to_schedule(self):
-                JobSearchQuery = 'SELECT CUSTOMER FROM JOBS WHERE READY_TO_SCHEDULE = 1;'
+                get = INPUT()
+                JobSearchQuery = "SELECT PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB WHERE READY_TO_SCHEDULE = 1;"
                 connection.ping()
                 cursor.execute(JobSearchQuery)
-                result = cursor.fetchmany()
-                for row in result:
-                    print(row)
+                result = cursor.fetchall()
+                table = get.PANDAS_TABULATED_DATAFRAME(result, self.columns._job_without_jobID)
+                get.and_print().COLORIZED_TABLE(table)
+            
+            def by_installer(self):
+                get = INPUT()
+                connection.ping()
+                installer = get.INSTALLER_AS_FOREIGN_KEY()
+                JobTableSql = Template('SELECT PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE FROM JOB WHERE INSTALLER = "$installer";').substitute(
+                    installer = installer
+                )
+                cursor.execute(JobTableSql)
+                rows = cursor.fetchall()
+                table = get.PANDAS_TABULATED_DATAFRAME(rows, self.columns._job_without_jobID)
+                get.and_print().COLORIZED_TABLE(table)
+                connection.commit()
+                connection.close()
         
 
         class designer:
+            columns = COLUMN()
             def by_name(self):
                 get = INPUT()
                 L_NAME, F_NAME = get.DESIGNER_AS_FOREIGN_KEY()
@@ -218,7 +246,24 @@ class SQL_INTERFACE:
                 connection.ping()
                 cursor.execute(DesignerSearchQuery)
                 result = cursor.fetchone()
-                print(result)
+                table = get.PANDAS_TABULATED_DATAFRAME(result, self.columns._designers)
+                get.and_print().COLORIZED_TABLE(table)
+                return result
+        
+        class installer:
+            columns = COLUMN()
+            def by_name(self):
+                get = INPUT()
+                L_NAME, F_NAME = get.INSTALLER_AS_FOREIGN_KEY()
+                InstallerSearchQuery = Template('SELECT * FROM INSTALLER WHERE F_NAME="$F_NAME" AND L_NAME="$L_NAME";').substitute(
+                    F_NAME = F_NAME,
+                    L_NAME = L_NAME
+                )
+                connection.ping()
+                cursor.execute(InstallerSearchQuery)
+                result = cursor.fetchone()
+                table = get.PANDAS_TABULATED_DATAFRAME(result, self.columns._installers)
+                get.and_print().COLORIZED_TABLE(table)
                 return result
     
 
@@ -227,31 +272,31 @@ class SQL_INTERFACE:
             def blind_and_box_count(self):
                 """ PATTERN: Grab BOX_COUNT, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT
                              Display all gathered columns
-                             Update count
+                             Update count with INPUT() logic
                              Determine if Ready to schedule
                 """
                 get = INPUT()
                 L_NAME, F_NAME = get.CUSTOMER_AS_FOREIGN_KEY()
                 _hash = get.JOB_ID(L_NAME + F_NAME)
-                query = Template('SELECT CUSTOMER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT FROM JOBS WHERE JOB_ID = "$_hash";').substitute(_hash = _hash)
+                query = Template('SELECT CUSTOMER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT FROM JOB WHERE JOB_ID = "$_hash";').substitute(_hash = _hash)
                 connection.ping()
                 cursor.execute(query)
                 result = cursor.fetchone()
                 CUSTOMER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT = result
-                df = pd.DataFrame(
-                    {
+                df_dict = {
                         "CUSTOMER": [CUSTOMER],
                         "BOXES IN WAREHOUSE": [BOXES_IN],
                         "BOXES NEEDED" : [TOTAL_BOXES],
                         "BLINDS IN WAREHOUSE": [BLINDS_ON_HAND],
                         "BLINDS NEEDED" : [BLIND_COUNT]
                     }
-                )
-                print("\n", df, "\n")
+                df = pd.DataFrame(df_dict)
+                table = get.TABULATE_UNIQUE_QUERY(df, df_dict.keys())
+                get.and_print().COLORIZED_TABLE(table)
                 count_menu = Menu()
                 option = -1
                 while option != 2:
-                    option = count_menu.update_blind_and_box_count()
+                    option = count_menu.JOB_MENUS().update_blind_and_box_count()
                     if option == 0:
                         BOXES_IN = BOXES_IN + get.NEW_NUMBER("boxes")
                     elif option == 1:
@@ -259,7 +304,7 @@ class SQL_INTERFACE:
                     else:
                         continue
                 READY_TO_SCHEDULE = get.READY_TO_SCHEDULE(BOXES_IN, TOTAL_BOXES)
-                query = Template('UPDATE JOBS SET BOXES_IN = "$BOXES_IN",\
+                query = Template('UPDATE JOB SET BOXES_IN = "$BOXES_IN",\
                                                   BLINDS_ON_HAND="$BLINDS_ON_HAND",\
                                                   READY_TO_SCHEDULE="$READY_TO_SCHEDULE" \
                                                   WHERE JOB_ID = "$_hash";').substitute(
@@ -272,7 +317,7 @@ class SQL_INTERFACE:
                 cursor.execute(query)
                 connection.commit()
                 connection.close()
-                query = Template('SELECT CUSTOMER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT FROM JOBS WHERE JOB_ID = "$_hash";').substitute(_hash = _hash)
+                query = Template('SELECT CUSTOMER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT FROM JOB WHERE JOB_ID = "$_hash";').substitute(_hash = _hash)
                 connection.ping()
                 cursor.execute(query)
                 result = cursor.fetchone()
@@ -281,11 +326,10 @@ class SQL_INTERFACE:
                 SCHEDULE = -1
                 if READY_TO_SCHEDULE == 1:
                     SCHEDULE = True
+                    print("\n", f"{colors.TABLE}THIS JOB IS READY TO SCHEDULE{colors.ENDC}\n")
                 else:
                     SCHEDULE = False
-
-                df = pd.DataFrame(
-                    {
+                updated_df_dict = {
                         "CUSTOMER": [CUSTOMER],
                         "BOXES IN WAREHOUSE": [BOXES_IN],
                         "BOXES NEEDED" : [TOTAL_BOXES],
@@ -293,8 +337,69 @@ class SQL_INTERFACE:
                         "BLINDS NEEDED" : [BLIND_COUNT],
                         "READY TO SCHEDULE" : [SCHEDULE]
                     }
-                )
-                print("\n\t\t[UPDATED JOB]\n\n", df, "\n")
+                df = pd.DataFrame(updated_df_dict)
+                table = get.TABULATE_UNIQUE_QUERY(df, updated_df_dict.keys())
+                get.and_print().COLORIZED_TABLE(table)
+
+
+    class delete:
+
+        def job(self):
+            get = INPUT()
+            L_NAME, F_NAME = get.CUSTOMER_AS_FOREIGN_KEY()
+            _hash = get.JOB_ID(L_NAME + F_NAME)
+            # Matt, Kaleb, Judd
+            """ 1. Grab PAYS, pass to Installer under pay_table
+                2. Update customer JOB_ID to NIL
+                3. Remove JOB
+            """
+            JobPayQuery = Template('SELECT PAYS, INSTALLER FROM JOB WHERE JOB_ID = "$_hash";').substitute(
+                _hash = _hash
+            )
+            # Treble damages - 
+            UpdateCustomerJobIDQuery = Template('UPDATE CUSTOMER SET JOB_ID = "COMPLETE" WHERE F_NAME = "$F_NAME" AND L_NAME = "$L_NAME";').substitute(
+                F_NAME = F_NAME,
+                L_NAME = L_NAME
+            )
+            DeleteJobQuery = Template('DELETE FROM JOB WHERE JOB_ID = "$_hash";').substitute(
+                _hash = _hash
+            )
+            connection.ping()
+            cursor.execute(JobPayQuery)
+            result = cursor.fetchone()
+            connection.commit()
+
+            getInstallerCurrentPay = Template('SELECT PAY FROM INSTALLER_PAY WHERE INSTALLER = "$INSTALLER";').substitute(
+                INSTALLER = result[1]
+            )
+            cursor.execute(getInstallerCurrentPay)
+            installer_current_pay = cursor.fetchone()
+            connection.commit()
+            installer_current_pay = installer_current_pay[0] + float(result[0])
+            UpdateInstallerPayQuery = Template('UPDATE INSTALLER_PAY SET PAY = "$PAY" WHERE INSTALLER = "$INSTALLER";').substitute(
+                PAY = installer_current_pay,
+                INSTALLER = result[1]
+            )
+
+            cursor.execute(UpdateInstallerPayQuery)
+            cursor.execute(UpdateCustomerJobIDQuery)
+            cursor.execute(DeleteJobQuery)
+            connection.commit()
+            connection.close()
+
+        #TODO: Deletions for all tables
+        def installer_from_installers_and_keep_pay(self):
+            get = INPUT()
+            L_NAME, F_NAME = get.INSTALLER_AS_FOREIGN_KEY()
+            deleteInstallerQuery = Template('DELETE FROM INSTALLER WHERE F_NAME = "$F_NAME" AND L_NAME = "$L_NAME";').substitute(
+                F_NAME = F_NAME,
+                L_NAME = L_NAME
+            )
+            connection.ping()
+            cursor.execute(deleteInstallerQuery)
+            connection.commit()
+            connection.close()
+        
 
 
 
