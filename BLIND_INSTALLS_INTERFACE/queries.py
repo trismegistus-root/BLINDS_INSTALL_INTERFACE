@@ -1,5 +1,23 @@
 from string import Template
 
+
+"""
+[CALL TEMPLATE]
+QUERY
+    TABLE
+        OPERATION
+            UNIQUE
+
+
+[LAYOUT OF CLASS]
+QUERY
+    CUSTOMER
+    JOB
+    DESIGNER
+    INSTALLER
+    INSTALLER_PAY
+"""
+
 class QUERY:
     class CUSTOMER:
         class INSERT:
@@ -22,6 +40,15 @@ class QUERY:
                     F_NAME = F_NAME,
                     L_NAME = L_NAME
                 )
+
+            def ALL_NEW_BOX_NEEDS_BY_CUSTOMER_NAME(self, F_NAME, L_NAME):
+                return Template('SELECT F_NAME, L_NAME, DESIGNER, JOB_ID FROM CUSTOMER WHERE F_NAME="$F_NAME" AND L_NAME="$L_NAME";').substitute(
+                    F_NAME = F_NAME,
+                    L_NAME = L_NAME
+                )
+                
+
+
             class WHOLE_TABLE:
                 def WITHOUT_JOBID(self):
                     return "SELECT F_NAME, L_NAME, ADDRESS, EMAIL, PHONE, AVAILABILITY, DESIGNER FROM CUSTOMER;"
@@ -38,8 +65,8 @@ class QUERY:
         class INSERT:
             def NEW_JOB(self, JOB_ID, PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE):
                 return Template('INSERT INTO JOB \
-                (JOB_ID, PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE) VALUES \
-                    ("$JOB_ID", "$PAYS", "$CUSTOMER", "$DESIGNER", "$INSTALLER", "$BOXES_IN", "$TOTAL_BOXES", "$BLINDS_ON_HAND", "$BLIND_COUNT", "$SCOPE", "$READY_TO_SCHEDULE");').substitute(
+                (JOB_ID, PAYS, CUSTOMER, DESIGNER, INSTALLER, BOXES_IN, TOTAL_BOXES, BLINDS_ON_HAND, BLIND_COUNT, SCOPE, READY_TO_SCHEDULE, BARCODES) VALUES \
+                    ("$JOB_ID", "$PAYS", "$CUSTOMER", "$DESIGNER", "$INSTALLER", "$BOXES_IN", "$TOTAL_BOXES", "$BLINDS_ON_HAND", "$BLIND_COUNT", "$SCOPE", "$READY_TO_SCHEDULE", "$BARCODES");').substitute(
                         JOB_ID = JOB_ID, 
                         PAYS = PAYS,
                         CUSTOMER = CUSTOMER, 
@@ -50,7 +77,8 @@ class QUERY:
                         BLINDS_ON_HAND = BLINDS_ON_HAND, 
                         BLIND_COUNT = BLIND_COUNT, 
                         SCOPE = SCOPE, 
-                        READY_TO_SCHEDULE = READY_TO_SCHEDULE
+                        READY_TO_SCHEDULE = READY_TO_SCHEDULE,
+                        BARCODES = "None"
                         )
         class DELETE:
             def BY_JOB_ID(self, _hash):
@@ -149,6 +177,9 @@ class QUERY:
                         F_NAME = F_NAME,
                         L_NAME = L_NAME
                     )
+
+
+
     class INSTALLER_PAY:
         class INSERT:
             def NEW_INSTALLER(self, L_NAME, F_NAME):
@@ -162,8 +193,23 @@ class QUERY:
                     INSTALLER = INSTALLER
                 )
         class UPDATE:
-            def PAY(self, PAY, INSTALLER):
+            def PAY(self, PAY, INSTALLER: tuple) -> tuple:
                 return Template('UPDATE INSTALLER_PAY SET PAY = "$PAY" WHERE INSTALLER = "$INSTALLER";').substitute(
                         PAY = PAY,
                         INSTALLER = INSTALLER
                     )
+            def PAY_SET_TO_ZERO(self, INSTALLER: tuple) -> tuple:
+                return Template('UPDATE INSTALLER_PAY SET PAY = 0.0 WHERE INSTALLER = "$INSTALLER";').substitute(
+                    INSTALLER = INSTALLER
+                )
+    
+    class BOX:
+        class INSERT:
+            def NEW_BOX(self, JOB_ID, CUSTOMER, DESIGNER, BARCODE):
+                return Template('INSERT INTO BOX (JOB_ID, CUSTOMER, DESIGNER, BARCODE) VALUES ("$JOB_ID", "$CUSTOMER", "$DESIGNER", "$BARCODE");').substitute(
+                    JOB_ID = JOB_ID,
+                    CUSTOMER = CUSTOMER,
+                    DESIGNER = DESIGNER,
+                    BARCODE = BARCODE
+                )
+                # TODO: Additional logic that updates box_count under JOB_ID and alerts when ready to schedule

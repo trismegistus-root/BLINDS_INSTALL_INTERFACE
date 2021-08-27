@@ -221,48 +221,81 @@ class SQL_INTERFACE:
                 df = pd.DataFrame(updated_df_dict)
                 table = get.TABULATE_UNIQUE_QUERY(df, updated_df_dict.keys())
                 get.and_print().COLORIZED_TABLE(table)
+            
+            def blind_and_box_count_by_barcode(self):
+                CUSTOMER, DESIGNER, JOB_ID = FORM().CUSTOMER().ADD_BOX_UNDER_CUSTOMER_NAME()
+                option = -1
+                while option != Menu().TERMINATE_MENU().update_blind_and_box_count_by_barcode:
+                    BARCODE = str(input("Scan barcode: "))
+                    sql = QUERY.BOX().INSERT().NEW_BOX(JOB_ID, CUSTOMER, DESIGNER, BARCODE)
+                    connection.ping()
+                    cursor.execute(sql)
+                    connection.commit()
+                    connection.close()
+                    option = Menu().JOB_MENUS().update_blind_and_box_count_by_barcode()
+                
+                
+
+        class installer_pay:
+            def and_set_to_zero(self):
+                INSTALLER = get.INSTALLER_AS_FOREIGN_KEY()
+                connection.ping()
+                setPayToZero = QUERY.INSTALLER_PAY().UPDATE().PAY_SET_TO_ZERO(INSTALLER)
+                cursor.execute(setPayToZero)
+                connection.commit()
+                connection.close()        
 
     class delete:
-        def job_and_update_installer_pay(self):
-            _hash, L_NAME, F_NAME = FORM.JOB().ID_AND_NAMES()
-            # Matt, Kaleb, Judd
-            """ 1. Grab PAYS, pass to Installer under pay_table
-                2. Update customer JOB_ID to NIL
-                3. Remove JOB
-            """
-            JobPayQuery = QUERY.JOB().SELECT().UNIQUE_COLUMNS().PAY_AND_INSTALLER().BY_JOB_ID(_hash)
-            # Treble damages - 
-            UpdateCustomerJobIDQuery = QUERY.CUSTOMER().UPDATE().JOB_ID_TO_COMPLETE(F_NAME, L_NAME)
-            DeleteJobQuery = QUERY.JOB().DELETE().BY_JOB_ID(_hash)
-            connection.ping()
-            cursor.execute(JobPayQuery)
-            result = cursor.fetchone() # result[0] = pay, result[1] = installer
-            INSTALLER = result[1]
-            PAY = result[0]
-            connection.commit()
-            getInstallerCurrentPay = QUERY.INSTALLER_PAY().SELECT().PAY(INSTALLER)
-            cursor.execute(getInstallerCurrentPay)
-            installer_current_pay = cursor.fetchone()
-            connection.commit()
-            installer_current_pay = installer_current_pay[0] + float(PAY)
-            UpdateInstallerPayQuery = QUERY.INSTALLER_PAY().UPDATE().PAY(installer_current_pay, INSTALLER)
-            cursor.execute(UpdateInstallerPayQuery)
-            cursor.execute(UpdateCustomerJobIDQuery)
-            cursor.execute(DeleteJobQuery)
-            connection.commit()
-            connection.close()
+        class job:
+            def and_update_installer_pay(self):
+                """ @ PARAM: NONE
+                    @ PURPOSE: Mark a job as complete by completely removing it.  
+                    @ NOTES: TODO: This is a quick method for testing interface patterns.
+                                   Ultimately, we will want to have a way to track past jobs, weekly pay, and "pay stubs", (pay stubs may end up being a separate .csv file)
+                                   This will require a method for updating appropriate customer if they are of repeat business. 
+                                   _hash is a SHA256 encryption of the concatenation of L_NAME + F_NAME of associated customer:
+                                        (This means one customer cannot have two open jobs at once)
+                                        (Some error checking for a multi-job customer may be necessary)
+                                        (Error checking may be required for jobs that are partial-installs of parent job)
+                    @ RETURNS: Job deleted from JOB table. 
+                               CUSTOMER JOB_ID updated to "Complete"
+                               INSTALLER_PAY updated by PAYS
+
+                """
+                _hash, L_NAME, F_NAME = FORM.JOB().ID_AND_NAMES()
+                JobPayQuery = QUERY.JOB().SELECT().UNIQUE_COLUMNS().PAY_AND_INSTALLER().BY_JOB_ID(_hash)
+                # Treble damages - 
+                UpdateCustomerJobIDQuery = QUERY.CUSTOMER().UPDATE().JOB_ID_TO_COMPLETE(F_NAME, L_NAME)
+                DeleteJobQuery = QUERY.JOB().DELETE().BY_JOB_ID(_hash)
+                connection.ping()
+                cursor.execute(JobPayQuery)
+                result = cursor.fetchone() # result[0] = pay, result[1] = installer
+                INSTALLER = result[1]
+                PAY = result[0]
+                connection.commit()
+                getInstallerCurrentPay = QUERY.INSTALLER_PAY().SELECT().PAY(INSTALLER)
+                cursor.execute(getInstallerCurrentPay)
+                installer_current_pay = cursor.fetchone()
+                connection.commit()
+                installer_current_pay = installer_current_pay[0] + float(PAY)
+                UpdateInstallerPayQuery = QUERY.INSTALLER_PAY().UPDATE().PAY(installer_current_pay, INSTALLER)
+                cursor.execute(UpdateInstallerPayQuery)
+                cursor.execute(UpdateCustomerJobIDQuery)
+                cursor.execute(DeleteJobQuery)
+                connection.commit()
+                connection.close()
 
         #TODO: Deletions for all tables
-        def installer_from_installers_and_keep_pay(self):
-            """ As the name suggests, this function safe deletes an installer from the INSTALLER table but NOT from INSTALLER_PAY table
-            """
-            L_NAME, F_NAME = get.INSTALLER_AS_FOREIGN_KEY()
-            deleteInstallerQuery = QUERY.INSTALLER().DELETE().BY_NAME(F_NAME, L_NAME)
-            connection.ping()
-            cursor.execute(deleteInstallerQuery)
-            connection.commit()
-            connection.close()
-        
+        class installer:
+            def and_keep_pay(self):
+                """ As the name suggests, this function safe deletes an installer from the INSTALLER table but NOT from INSTALLER_PAY table
+                """
+                L_NAME, F_NAME = get.INSTALLER_AS_FOREIGN_KEY()
+                deleteInstallerQuery = QUERY.INSTALLER().DELETE().BY_NAME(F_NAME, L_NAME)
+                connection.ping()
+                cursor.execute(deleteInstallerQuery)
+                connection.commit()
+                connection.close()
 
 
 
