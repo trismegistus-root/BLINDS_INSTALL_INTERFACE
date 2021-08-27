@@ -39,7 +39,9 @@ def driver(please: SQL_INTERFACE) -> SQL_INTERFACE:
                 elif job_option == 4:
                     please.search_for().job().by_installer()
                 elif job_option == 5:
-                    please.delete().job_and_update_installer_pay()
+                    please.delete().job().and_update_installer_pay()
+                elif job_option == 6:
+                    please.update().job().blind_and_box_count_by_barcode()
                 else:
                     continue
 
@@ -70,6 +72,8 @@ def driver(please: SQL_INTERFACE) -> SQL_INTERFACE:
                     please.show_all().installers()
                 elif installer_option == 4:
                     please.delete().installer()
+                elif installer_option == 5:
+                    please.update().installer_pay().and_set_to_zero()
                 else:
                     continue
         else:
